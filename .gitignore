@@ -39,3 +39,12 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Supabase and local environment secrets
+.env
+.env.*
+!.env.example
+
+# Local backup copies - keep locally, exclude from GitHub
+*.backup
+*.overdue-backup
