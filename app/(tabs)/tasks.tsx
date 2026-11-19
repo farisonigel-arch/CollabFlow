@@ -7,9 +7,11 @@ import TaskDetailsModal, {
   type TaskDetails,
   type TaskEscalation,
 } from '@/components/TaskDetailsModal';
+import { loadData, saveData, STORAGE_KEYS } from '@/utils/storage';
+import { useLocalSearchParams } from 'expo-router';
 
 import { useNotifications } from '@/context/NotificationContext';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -154,6 +156,9 @@ const priorityColors: Record<Priority, string> = {
 };
 
 export default function TasksScreen() {
+  const { taskId } = useLocalSearchParams<{
+    taskId?: string;
+  }>();
   const { addNotification } = useNotifications();
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [activeFilter, setActiveFilter] = useState<Filter>('All');
@@ -171,6 +176,130 @@ export default function TasksScreen() {
 
   const [taskEscalations, setTaskEscalations] =
     useState<Record<number, TaskEscalation>>({});
+
+  const [dataLoaded, setDataLoaded] = useState(false);
+    useEffect(() => {
+      let active = true;
+
+      const restoreTasksData = async () => {
+        try {
+          const [savedTasks, savedComments, savedEscalations] =
+            await Promise.all([
+              loadData(STORAGE_KEYS.TASKS, initialTasks),
+              loadData(STORAGE_KEYS.TASK_COMMENTS, initialTaskComments),
+              loadData(
+                STORAGE_KEYS.TASK_ESCALATIONS,
+                {} as Record<number, TaskEscalation>
+              ),
+            ]);
+
+          if (!active) return;
+
+         setTasks(savedTasks);
+         setTaskComments(savedComments);
+         setTaskEscalations(savedEscalations);
+        } catch (error) {
+          console.error('Unable to restore Tasks data:', error);
+        } finally {
+          if (active) {
+            setDataLoaded(true);
+          }
+        }
+      };
+
+      restoreTasksData();
+
+      return () => {
+        active = false;
+      };
+    }, []);
+
+    useEffect(() => {
+      if (!dataLoaded) return;
+
+      const persistTasksData = async () => {
+        try {
+          await Promise.all([
+            saveData(STORAGE_KEYS.TASKS, tasks),
+            saveData(STORAGE_KEYS.TASK_COMMENTS, taskComments),
+            saveData(STORAGE_KEYS.TASK_ESCALATIONS, taskEscalations),
+          ]);
+        } catch (error) {
+          console.error('Unable to save Tasks data:', error);
+        }
+      };
+
+      persistTasksData();
+    }, [dataLoaded, tasks, taskComments, taskEscalations]);
+
+  const routeTask = useMemo(() => {
+    if (!taskId) return null;
+
+    return tasks.find((task) => task.id === Number(taskId)) ?? null;
+  }, [dataLoaded, taskId, tasks]);
+
+  const activeTask = routeTask ?? selectedTask;
+  const isDetailsVisible = detailsVisible || Boolean(routeTask);
+
+  useEffect(() => {
+    if (!dataLoaded) return;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    tasks.forEach((task) => {
+      // Completed tasks do not need reminders.
+      if (task.status === 'Completed') return;
+
+      const [year, month, day] = task.dueDate.split('-').map(Number);
+      const dueDate = new Date(year, month - 1, day);
+      dueDate.setHours(0, 0, 0, 0);
+
+      const daysUntilDue = Math.round(
+        (Date.UTC(
+          dueDate.getFullYear(),
+          dueDate.getMonth(),
+          dueDate.getDate()
+        ) -
+          Date.UTC(
+            today.getFullYear(),
+            today.getMonth(),
+            today.getDate()
+          )) /
+          (1000 * 60 * 60 * 24)
+      );
+
+      let title = '';
+      let message = '';
+
+      if (daysUntilDue < 0) {
+        title = 'Task overdue';
+        message = `${task.title} is overdue. Its due date was ${task.dueDate}.`;
+      } else if (daysUntilDue === 0) {
+        title = 'Task due today';
+        message = `${task.title} is due today.`;
+      } else if (daysUntilDue === 1) {
+        title = 'Task due tomorrow';
+        message = `${task.title} is due tomorrow.`;
+      } else if (daysUntilDue <= 2) {
+        title = 'Task due soon';
+        message = `${task.title} is due in ${daysUntilDue} days.`;
+      }
+
+      if (!title) return;
+
+      const reminderType =
+        daysUntilDue < 0 ? 'overdue' : 'due';
+
+      addNotification({
+        id: `task-${reminderType}-${task.id}-${task.dueDate}`,
+        title,
+        message,
+        type: 'Task',
+        taskId: task.id,
+      });
+    });
+  }, [dataLoaded, tasks, addNotification]);
 
   // Demonstration routing based on the sample Reporting Lines structure.
   const managerByAssignee: Record<string, string> = {
@@ -213,10 +342,6 @@ export default function TasksScreen() {
   const showTaskDetails = (task: Task) => {
     setSelectedTask(task);
     setDetailsVisible(true);
-  };
-
-  const closeTaskDetails = () => {
-    setDetailsVisible(false);
   };
 
   const addTaskComment = (taskId: number, message: string) => {
@@ -639,33 +764,34 @@ export default function TasksScreen() {
       </ScrollView>
 
       <TaskDetailsModal
-        visible={detailsVisible}
-        task={selectedTask}
+        visible={isDetailsVisible}
+        task={activeTask}
         comments={
-          selectedTask
-            ? taskComments[selectedTask.id] ?? []
-            : []
+          activeTask ? taskComments[activeTask.id] ?? [] : []
         }
         onAddComment={addTaskComment}
         escalation={
-          selectedTask
-            ? taskEscalations[selectedTask.id] ?? null
-            : null
+          activeTask ? taskEscalations[activeTask.id] ?? null : null
         }
         onReportBlocked={reportTaskBlocked}
         onEscalate={escalateTask}
         onResolveEscalation={resolveTaskEscalation}
-        onClose={closeTaskDetails}
+        onClose={() => {
+          setDetailsVisible(false);
+          setSelectedTask(null);
+        }}
         onEdit={(task: TaskDetails) => {
           setDetailsVisible(false);
+          setSelectedTask(null);
           openEditForm(task);
         }}
         onUpdateStatus={(task: TaskDetails) => {
           updateTaskStatus(task);
-      }}
+        }}
       />
 
       <TaskFormModal
+        key={editingTask ? `task-${editingTask.id}` : 'new-task'}
         visible={formVisible}
         initialTask={editingTask}
         approvedMembers={approvedMembers}

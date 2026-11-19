@@ -1,10 +1,10 @@
-
 import {
   useNotifications,
   type NotificationItem,
   type NotificationType,
 } from '@/context/NotificationContext';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
   Alert,
@@ -134,10 +134,21 @@ export default function UpdatesScreen() {
     );
   };
 
+  const handleNotificationPress = (item: NotificationItem) => {
+    markAsRead(item.id);
+
+    if (item.taskId !== undefined) {
+      router.push({
+        pathname: '/(tabs)/tasks',
+        params: { taskId: String(item.taskId) },
+      });
+    }
+  };
+
   const renderNotification = ({ item }: { item: NotificationItem }) => (
     <Pressable
       style={[styles.notificationCard, !item.read && styles.unreadCard]}
-      onPress={() => markAsRead(item.id)}
+      onPress={() => handleNotificationPress(item)}
     >
       <View
         style={[
