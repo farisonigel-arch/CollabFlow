@@ -366,10 +366,12 @@ export default function UpdatesScreen() {
             size={19}
             color="#2563EB"
           />
+
           <Text style={styles.previewText}>
-            Development preview: updates currently use sample data stored
-            locally. Real notifications, activity records and synchronisation
-            will be connected later.
+            Development preview: notifications are currently held in application
+            memory and are not saved between restarts. The activity log uses
+            sample records. Persistent notifications, server-backed activity
+            records and synchronisation will be added in a future stage.
           </Text>
         </View>
 

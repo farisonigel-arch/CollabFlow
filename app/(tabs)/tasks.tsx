@@ -756,9 +756,9 @@ export default function TasksScreen() {
         <View style={styles.notice}>
           <Text style={styles.noticeTitle}>Development preview</Text>
           <Text style={styles.noticeText}>
-            Tasks currently use sample data stored locally in the app.
-            Updates will reset when the app is restarted. Database storage,
-            real assignments and task notifications will be added later.
+            Tasks, comments and escalations are saved locally on this device.
+            Shared team data, real assignments and server-side synchronisation
+            will be added when the Supabase database is implemented.
           </Text>
         </View>
       </ScrollView>
