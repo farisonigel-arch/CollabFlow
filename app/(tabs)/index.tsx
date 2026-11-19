@@ -41,7 +41,7 @@ export default function DashboardScreen() {
           <Text style={styles.eyebrow}>WORKSPACE OVERVIEW</Text>
           <Text style={styles.heading}>Dashboard</Text>
           <Text style={styles.subtitle}>
-            Your team's progress, at a glance.
+            Your team&apos;s progress, at a glance.
           </Text>
         </View>
 
