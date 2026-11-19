@@ -366,7 +366,6 @@ export default function UpdatesScreen() {
             size={19}
             color="#2563EB"
           />
-
           <Text style={styles.previewText}>
             Development preview: notifications are currently held in application
             memory and are not saved between restarts. The activity log uses
