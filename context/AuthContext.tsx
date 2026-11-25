@@ -1,3 +1,6 @@
+import { Platform } from 'react-native';
+import * as ExpoLinking from 'expo-linking';
+
 import React, {
   createContext,
   useCallback,
@@ -34,6 +37,10 @@ interface AuthContextType {
 
   resetPassword: (
     email: string
+  ) => Promise<{ error: AuthError | null }>;
+
+  updatePassword: (
+    password: string
   ) => Promise<{ error: AuthError | null }>;
 }
 
@@ -117,10 +124,21 @@ export function AuthProvider({
   }, []);
 
   const resetPassword = useCallback(async (email: string) => {
+    const redirectTo =
+      Platform.OS === 'web'
+        ? `${window.location.origin}/reset-password`
+        : ExpoLinking.createURL('reset-password');
+
     const { error } = await supabase.auth.resetPasswordForEmail(
-      email.trim().toLowerCase()
+      email.trim().toLowerCase(),
+      { redirectTo }
     );
 
+    return { error };
+  }, []);
+
+  const updatePassword = useCallback(async (password: string) => {
+    const { error } = await supabase.auth.updateUser({ password });
     return { error };
   }, []);
 
@@ -132,6 +150,7 @@ export function AuthProvider({
     signIn,
     signOut,
     resetPassword,
+    updatePassword,
   };
 
   return (

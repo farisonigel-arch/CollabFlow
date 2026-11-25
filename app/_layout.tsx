@@ -64,6 +64,11 @@ export default function RootLayout() {
             />
 
             <Stack.Screen
+              name="reset-password"
+              options={{ headerShown: false }}
+            />
+
+            <Stack.Screen
               name="(tabs)"
               options={{ headerShown: false }}
             />
