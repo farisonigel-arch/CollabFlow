@@ -1,5 +1,16 @@
 
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import {
+  Alert,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+
+import { useAuth } from '@/context/AuthContext';
 
 const tasks = [
   {
@@ -30,6 +41,44 @@ const stats = [
 ];
 
 export default function DashboardScreen() {
+  const { signOut } = useAuth();
+  const [signingOut, setSigningOut] = useState(false);
+
+  async function handleSignOut() {
+    if (signingOut) return;
+
+    setSigningOut(true);
+
+    try {
+      const { error } = await signOut();
+
+      if (error) {
+        const message = `Unable to sign out: ${error.message}`;
+
+        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+          window.alert(message);
+        } else {
+          Alert.alert('Sign out failed', message);
+        }
+
+        setSigningOut(false);
+      }
+      // On success, AuthContext updates the session.
+      // The protected tab layout redirects to login automatically.
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'An unexpected error occurred.';
+
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.alert(`Unable to sign out: ${message}`);
+      } else {
+        Alert.alert('Sign out failed', message);
+      }
+
+      setSigningOut(false);
+    }
+  }
+
   return (
     <ScrollView
       style={styles.screen}
@@ -45,8 +94,26 @@ export default function DashboardScreen() {
           </Text>
         </View>
 
-        <View style={styles.logo}>
-          <Text style={styles.logoText}>C</Text>
+        <View style={styles.headerActions}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Sign out of CollabFlow"
+            disabled={signingOut}
+            onPress={handleSignOut}
+            style={({ pressed }) => [
+              styles.signOutButton,
+              pressed && styles.pressed,
+              signingOut && styles.signOutDisabled,
+            ]}
+          >
+            <Text style={styles.signOutText}>
+              {signingOut ? 'Signing out...' : 'Sign out'}
+            </Text>
+          </Pressable>
+
+          <View style={styles.logo}>
+            <Text style={styles.logoText}>C</Text>
+          </View>
         </View>
       </View>
 
@@ -154,6 +221,25 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#64748B',
     marginTop: 5,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  signOutButton: {
+    backgroundColor: '#E8F1FF',
+    paddingHorizontal: 13,
+    paddingVertical: 11,
+    borderRadius: 12,
+  },
+  signOutText: {
+    color: '#2459A9',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  signOutDisabled: {
+    opacity: 0.5,
   },
   logo: {
     width: 48,
