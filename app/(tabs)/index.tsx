@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 
+import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 
 const tasks = [
@@ -41,6 +42,7 @@ const stats = [
 ];
 
 export default function DashboardScreen() {
+  const router = useRouter();
   const { signOut } = useAuth();
   const [signingOut, setSigningOut] = useState(false);
 
@@ -129,6 +131,30 @@ export default function DashboardScreen() {
           <Text style={styles.demoBadgeText}>DEMO WORKSPACE</Text>
         </View>
       </View>
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Open CollabFlow AI Assistant"
+        onPress={() => router.push('/assistant')}
+        style={({ pressed }) => [
+          styles.assistantCard,
+          pressed && styles.pressed,
+        ]}
+      >
+        <View style={styles.assistantCardIcon}>
+          <Text style={styles.assistantCardIconText}>✦</Text>
+        </View>
+
+        <View style={styles.assistantCardDetails}>
+          <Text style={styles.assistantCardLabel}>COLLABFLOW AI</Text>
+          <Text style={styles.assistantCardTitle}>Meet your AI Assistant</Text>
+          <Text style={styles.assistantCardDescription}>
+            Get help with projects, teams, business activities and proposals.
+          </Text>
+        </View>
+
+        <Text style={styles.assistantCardArrow}>›</Text>
+      </Pressable>
 
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Task overview</Text>
@@ -385,6 +411,57 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.75,
+  },
+  assistantCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: '#D9E6F8',
+    padding: 16,
+    marginBottom: 27,
+  },
+  assistantCardIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#E8F1FF',
+    marginRight: 13,
+  },
+  assistantCardIconText: {
+    color: '#2459A9',
+    fontSize: 27,
+    fontWeight: '800',
+  },
+  assistantCardDetails: {
+    flex: 1,
+    paddingRight: 8,
+  },
+  assistantCardLabel: {
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+    color: '#2459A9',
+    marginBottom: 5,
+  },
+  assistantCardTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#172033',
+  },
+  assistantCardDescription: {
+    fontSize: 11,
+    lineHeight: 16,
+    color: '#64748B',
+    marginTop: 4,
+  },
+  assistantCardArrow: {
+    fontSize: 27,
+    color: '#2459A9',
+    fontWeight: '400',
   },
   footer: {
     fontSize: 11,

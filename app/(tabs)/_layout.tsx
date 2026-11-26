@@ -1,7 +1,7 @@
 
 import { Ionicons } from '@expo/vector-icons';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Redirect, Tabs } from 'expo-router';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { useAuth } from '@/context/AuthContext';
 
